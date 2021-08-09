@@ -31,7 +31,7 @@ app.use(session({
     },
     store:MongoStore.create(
     {
-        mongoUrl:'mongodb://localhost:27017/doubtresolution',
+        mongoUrl:'mongodb+srv://nishant:nishant.1234@cluster0.aywgg.mongodb.net/myFirstDatabase?retryWrites=true&w=majority',
         autoRemove:'disabled'
     },function(err){
         console.log(err || 'connect mongo set up ok');
