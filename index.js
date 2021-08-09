@@ -1,9 +1,11 @@
 const express =require('express');
-const bodyParser=require('body-parser')
+const bodyParser=require('body-parser');
+require('dotenv').config();
 const port=process.env.PORT || 8000;
 const app=express();
 const cors = require('cors');
 app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
+
 
 const db=require('./config/mongoose');
 const session=require('express-session');
@@ -42,7 +44,7 @@ app.use(passport.session());
 //use express router
 app.use('/',require('./routes'));
 
-app.listen(port,function(err){
+app.listen(process.env.PORT||port,function(err){
     if(err){
         console.log(`error is : ${err}`);
     }
