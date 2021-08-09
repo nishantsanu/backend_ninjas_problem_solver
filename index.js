@@ -4,7 +4,7 @@ require('dotenv').config();
 const port=process.env.PORT || 8000;
 const app=express();
 const cors = require('cors');
-app.use(cors({ credentials: true, origin: ["http://localhost:3000","https://relaxed-shaw-9c951f.netlify.app"]}));
+app.use(cors({ credentials: true, origin: "https://relaxed-shaw-9c951f.netlify.app"}));
 
 
 const db=require('./config/mongoose');
