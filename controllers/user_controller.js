@@ -3,7 +3,7 @@ const Student = require('../models/student');
 const Teacher = require('../models/teacher');
 const Ta = require('../models/ta');
 const Doubt = require('../models/doubt');
-const Comment= require('../models/comment');
+const Comment = require('../models/comment');
 const jwt = require('jsonwebtoken');
 
 module.exports.create = async function (req, res) {
@@ -29,13 +29,19 @@ module.exports.create = async function (req, res) {
                 message: "user already exists"
             })
         }
-        let newuser = Db.create({
+        let newuser = await Db.create({
             email: req.body.email,
             password: req.body.password,
             userType: userType
-        })
-        return res.status(200).json({
-            message: "user created"
+        });
+        let toSendUser = await Db.findById(newuser);
+
+        return res.status(201).json({
+            message: 'User Created',
+            data: {
+                token: jwt.sign(toSendUser.toJSON(), 'doubtresolving', { expiresIn: '10000000' })
+            },
+            user: newuser,
         })
 
     } catch (error) {
@@ -48,17 +54,31 @@ module.exports.create = async function (req, res) {
 
 module.exports.createSession = async function (req, res) {
     try {
+        let tempUser=req.body.userType;
+        console.log(tempUser);
+
         let Db = Student;
+        if(tempUser==='ta'){
+            Db=Ta;
+        }else if(tempUser==='teacher'){
+            Db=Teacher;
+        }
         let user = await Db.findOne({ email: req.body.email });
         //if user is not found
-        if (user && user.password != req.body.password) {
+        if(!user){
+            return res.status(400).json({
+                message:'user dont exist'
+            })
+        }
+        else if (user.password != req.body.password) {
             return res.json(422, {
                 message: 'Invalid Username/Password'
             });
         }
-        else if (user) {
-            //if user is found
-            //returning token
+        // else if (user) {
+        //     //if user is found
+        //     //returning token
+        console.log(user);
             return res.json(200, {
                 message: 'Sign In successful ,here is your token please keep it safe!',
                 data: {
@@ -66,7 +86,7 @@ module.exports.createSession = async function (req, res) {
                 },
                 user: user,
             });
-        };
+        // };
         Db = Ta;
         user = await Db.findOne({ email: req.body.email });
         //if user is not found
@@ -127,7 +147,7 @@ module.exports.createDoubt = async (req, res) => {
         console.log(req.user._id);
         console.log(req.body);
 
-        let newdoubt = Doubt.create({
+        let newdoubt = await Doubt.create({
             title: req.body.title,
             description: req.body.description,
             status: "active",
@@ -139,7 +159,7 @@ module.exports.createDoubt = async (req, res) => {
         student.doubts.push(newdoubt._id);
         await student.save();
 
-        return res.status(200).json({
+        return res.status(201).json({
             message: "doubt created",
             doubt: newdoubt
         });
@@ -148,68 +168,97 @@ module.exports.createDoubt = async (req, res) => {
     } catch (error) {
         console.log("error while creating user " + error);
         return res.status(400).json({
-            error: " coudnot create doubt"
+            error: " couldnot create doubt"
         })
     }
 }
 //accept-doubt
 module.exports.acceptDoubt = async (req, res) => {
     try {
-        console.log(req.user._id);
-        console.log(req.body.doubtId);
+        console.log("inside accept doubt");
+
         let doubt = await Doubt.findById(req.body.doubtId);
         let ta = await Ta.findById(req.user._id);
-        doubt.status = 'inresolution';
-        doubt.assignedTo = req.user._id;
-        ta.doubtsAccepted.push(req.body.doubtId);
-        ta.anyActiveDoubt=true;
-        ta.countAcceptedDoubt = (parseInt(ta.countAcceptedDoubt, 10) + 1).toString();
-        await ta.save();
-        await doubt.save();
-        return res.status(200).json({
-            message: 'doubt succesfully accepted'
-        });
+        console.log(ta.anyActiveDoubt);
+        if (ta.anyActiveDoubt) {
+            console.log("theres active doubt");
+            return res.status(400).json({
+                message: 'you can solve one question at a time'
+            })
+        } else {
+            doubt.status = 'inresolution';
+            doubt.assignedTo = req.user._id;
+            ta.doubtsAccepted.push(req.body.doubtId);
+            ta.anyActiveDoubt = true;
+            ta.countAcceptedDoubt = (parseInt(ta.countAcceptedDoubt, 10) + 1).toString();
+            await ta.save();
+            await doubt.save();
+            return res.status(202).json({
+                message: 'doubt succesfully accepted',
+                doubt: doubt
+            });
+        }
+
     } catch (error) {
         console.log("error while accepting doubt ---> " + error);
-        return res.status(222).json({
+        return res.status(400).json({
             error: 'could not accept doubt'
         })
     }
 }
 
-//solved doubt
-module.exports.solvedDoubt=async(req,res)=>{
+//escalate doubt
+module.exports.escalateDoubt = async (req, res) => {
+    try {
+        console.log(req.body);
+        let doubt = await Doubt.findById(req.body.doubt);
+        doubt.status = 'escalated';
+        await doubt.save();
 
-    let doubt=await Doubt.findById(req.body.doubt);
-    doubt.answer=req.body.answer;
-    doubt.status='active';
+        let ta = await Ta.findById(req.user._id);
+        ta.countEscalatedDoubt = ta.countEscalatedDount + 1;
+        ta.anyActiveDoubt = false;
 
-    let ta=await Ta.findById(req.user._id);
-    ta.countEscalatedDoubt=ta.countEscalatedDoubt+1;
+        await ta.save();
 
+        return res.status(200).json({
+            doubt: doubt
+        })
+    } catch (error) {
+        return res.status(400).json({
+            message:'error while saving'
+        })
+    }
 
-    return res.status(200).json({
-        doubt:doubt
-    })
 
 }
 
 //solved doubt
-module.exports.solvedDoubt=async(req,res)=>{
+module.exports.solvedDoubt = async (req, res) => {
+    try {
+        console.log(req.body);
+        let doubt = await Doubt.findById(req.body.doubt);
+        doubt.answer = req.body.answer;
+        doubt.solvedBy = req.user._id;
+        doubt.status = 'solved';
+        doubt.solvedDate = new Date();
+        await doubt.save();
+        let ta = await Ta.findById(req.user._id);
+        ta.countSolvedDoubt = ta.countSolvedDount + 1;
+        ta.solvedTime = (new Date() - new Date(doubt.createdAt)) / 60000;
+        ta.anyActiveDoubt = false;
 
-    let doubt=await Doubt.findById(req.body.doubt);
-    doubt.answer=req.body.answer;
-    doubt.solvedBy=req.user._id;
-    doubt.status='solved';
+        await ta.save();
 
-    let ta=await Ta.findById(req.user._id);
-    ta.countSolvedDoubt=ta.countSolvedDount+1;
-    ta.solvedTime=(new Date()-new Date(doubt.createdAt))/60000;
-    ta.anyActiveDoubt=false;
+        return res.status(200).json({
+            doubt: doubt
+        })
+    } catch (error) {
+        return res.status(400).json({
+            message:'error while saving'
+        })
+    }
 
-    return res.status(200).json({
-        doubt:doubt
-    })
 
 }
 
@@ -218,23 +267,23 @@ module.exports.addNewComment = async (req, res) => {
     try {
         // console.log(req.user._id);
         console.log(req.body.parentDoubt);
-        let parentDoubt=await Doubt.findById(req.body.parentDoubt);
+        let parentDoubt = await Doubt.findById(req.body.parentDoubt);
         let newComment = await Comment.create({
             parentDoubt: req.body.parentDoubt,
             description: req.body.commentDescription,
             commentedBy: req.user._id,
         })
         // await ta.save();
-        console.log("before" +parentDoubt);
+        console.log("before" + parentDoubt);
         parentDoubt.comments.push(newComment);
         await parentDoubt.save();
         // console.log("after" +parentDoubt.toString());
         return res.status(200).json({
             message: 'comment added succesfully',
-            comment:newComment
+            comment: newComment
         });
     } catch (error) {
-        console.log("error while creating comment ---> "+error);
+        console.log("error while creating comment ---> " + error);
         return res.status(222).json({
             error: 'could not accept doubt'
         })
@@ -251,8 +300,11 @@ module.exports.getTeacherDashboard = async (req, res) => {
             if (doubt.status === 'solved') {
                 totalResolved++;
                 const endTime = new Date(doubt.solvedDate);
+                
                 const startTime = new Date(doubt.createdAt);
+                
                 totalTime += Math.round((endTime - startTime) / 60000);
+                console.log(totalTime);
             } else if (doubt.status === 'escalated') {
                 totalEscalated++;
             }

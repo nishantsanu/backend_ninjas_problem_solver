@@ -11,6 +11,8 @@ router.post('/create-doubt',passport.authenticate('jwt',{session:false}),userCon
 router.post('/doubt/accept-doubt',passport.authenticate('jwt',{session:false}),userController.acceptDoubt);
 router.post('/doubt/add-comment',passport.authenticate('jwt',{session:false}),userController.addNewComment);
 router.get('/teacher/dashboard',passport.authenticate('jwt',{session:false}),userController.getTeacherDashboard);
+router.post('/doubt/solved-doubt',passport.authenticate('jwt',{session:false}),userController.solvedDoubt);
+router.post('/doubt/escalate-doubt',passport.authenticate('jwt',{session:false}),userController.escalateDoubt);
 // ,passport.authenticate('jwt',{session:false})
 // use passport as a middleware to authenticate
 router.post('/create-session',userController.createSession);

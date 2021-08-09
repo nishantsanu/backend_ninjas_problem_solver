@@ -28,7 +28,7 @@ const doubtSchema=new mongoose.Schema({
     comments:[{
         type:mongoose.Schema.Types.ObjectId,
         ref:'Comment'
-    }]
+    }],
 
 },{
     //to add a feature of 'created at' and 'updated at'.
