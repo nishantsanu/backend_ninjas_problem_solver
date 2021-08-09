@@ -8,7 +8,6 @@ const jwt = require('jsonwebtoken');
 
 module.exports.create = async function (req, res) {
     try {
-        console.log(req.body);
         if (!req.body) {
             return res.status(202).json({
                 message: "Please fill the credentials"
@@ -151,7 +150,6 @@ module.exports.acceptDoubt = async (req, res) => {
 //escalate doubt
 module.exports.escalateDoubt = async (req, res) => {
     try {
-        console.log(req.body);
         let doubt = await Doubt.findById(req.body.doubt);
         doubt.status = 'escalated';
         await doubt.save();
@@ -239,7 +237,6 @@ module.exports.getTeacherDashboard = async (req, res) => {
                 const startTime = new Date(doubt.createdAt);
 
                 totalTime += Math.round((endTime - startTime) / 60000);
-                console.log(totalTime);
             } else if (doubt.status === 'escalated') {
                 totalEscalated++;
             }
@@ -250,7 +247,6 @@ module.exports.getTeacherDashboard = async (req, res) => {
         averageTime = totalTime / totalResolved;
 
         const taList = await Ta.find({}).select('-password');
-        console.log(taList);
         return res.status(200).json({
             totalDoubt: totalDoubt,
             totalResolved: totalResolved,
@@ -259,7 +255,6 @@ module.exports.getTeacherDashboard = async (req, res) => {
             taList: taList,
         })
     } catch (error) {
-        console.log("error in getting teacher dashboard " + error);
         return res.status(222).json({
             message: "error in fetching dashboard data"
         })

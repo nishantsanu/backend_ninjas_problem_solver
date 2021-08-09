@@ -16,7 +16,6 @@ passport.use(new LocalStrategy({
     passReqToCallback: true
 },
     function (req, email, password, done) {
-        console.log("inside local");
         let userType=req.body.userType;
         let Db = Student;
         if (userType === "ta") {
@@ -26,43 +25,16 @@ passport.use(new LocalStrategy({
         } else if (userType === "student") {
             Db = Student;
         }
-        console.log("db is = ",Db);
         //find the student and establish the identity
         Db.findOne({ email: email }, function (err, student) {
-            console.log("finding");
             if (err) {
-                console.log(error);
                 return done(err,false);
             }
             if (!student || student.password != password) {
-                console.log(password);
                 return done(null, false);
             }
-            console.log(student);
             return done(null, student);
         });
-        //find the teacher and establish the identity
-        // Teacher.findOne({ email: email }, function (err, teacher) {
-        //     if (err) {
-        //         return done(err);
-        //     }
-        //     if (!teacher || teacher.password != password) {
-        //         return done(null, false);
-        //     }
-        //     console.log(teacher);
-        //     return done(null, teacher);
-        // });
-        // //find the Ta and establish the identity
-        // Ta.findOne({ email: email }, function (err, ta) {
-        //     if (err) {
-        //         return done(err);
-        //     }
-        //     if (!ta || ta.password != password) {
-        //         return done(null, false);
-        //     }
-        //     console.log(ta);
-        //     return done(null, ta);
-        // });
 
     }
 ));
@@ -75,17 +47,7 @@ passport.serializeUser(function (user, done) {
 });
 //deserialing the user  from the key in cookies
 passport.deserializeUser(function (id, done) {
-    console.log("inside deserial");
-
     Db = Student;
-    console.log("id is " + id);
-    // if (userType === "ta") {
-    //     Db = Ta;
-    // } else if (userType === "teacher") {
-    //     Db = Teacher;
-    // } else if (userType === "student") {
-    //     Db = Student;
-    // }
     Db.findById(id, function (err, user) {
         if (err) {
             console.log('error in finding user --> passport ');
