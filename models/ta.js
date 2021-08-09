@@ -8,9 +8,7 @@ const taSchema=new mongoose.Schema({
     },
     password:{
         type:String,
-        
         required:true
-    
     },
     name:{
         type:String,
@@ -22,15 +20,27 @@ const taSchema=new mongoose.Schema({
     }],
     countAcceptedDoubt:{
         type:String,
+        default:"0",
+    },
+    solvedTime:{
+        type:Number,
+        default:'0'
     },
     countResolvedDoubt:{
         type:String,
+        default:"0",
     },
     countEscalatedDoubt:{
         type:String,
+        default:"0",
+    },
+    anyActiveDoubt:{
+        type:Boolean,
+        default:false
     },
     userType:{
         type:String,
+        default:"0",
     }
 
 },{

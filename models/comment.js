@@ -1,6 +1,6 @@
 const mongoose=require('mongoose');
 
-const CommentSchema=new mongoose.Schema({
+const commentSchema=new mongoose.Schema({
     description:{
         type: String,
     },
@@ -8,6 +8,10 @@ const CommentSchema=new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:'Student'
     },
+    parentDoubt:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'Doubt'
+    }
 
 },{
     //to add a feature of 'created at' and 'updated at'.

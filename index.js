@@ -12,20 +12,20 @@ const session=require('express-session');
 const cookieParser=require('cookie-parser');
 const passport=require('passport');
 const passportLocal=require('./config/passport-local-strategy');
+const passportJWT=require('./config/passport-jwt-strategy');
 //importing connect-mongo module and specifically a arguement named 'session'. 
 const MongoStore=require('connect-mongo');
 
-app.use(express.urlencoded());
-
 
 // body parser configs
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+app.use(express.urlencoded());
 app.use(bodyParser.json({ limit: "50mb" }));
+app.use(cookieParser());
 //mongo store is used to store session cookie in the db
 app.use(session({
     name:'doubtresolution',
     // TODO change the secret before deployment in production mode
-    secret:"dummy_cookie_wow",
+    secret:"doubtresolution",
     saveUninitialized:false,
     resave:false,
     cookie:{
@@ -45,7 +45,7 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(passport.setAuthenticatedUser);
+// app.use(passport.setAuthenticatedUser);
 //use express router
 app.use('/',require('./routes'));
 

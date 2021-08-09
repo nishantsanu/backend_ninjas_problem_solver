@@ -1,6 +1,6 @@
 const mongoose=require('mongoose');
 
-const DoubtSchema=new mongoose.Schema({
+const doubtSchema=new mongoose.Schema({
     title:{
         type: String,
     },
@@ -17,6 +17,9 @@ const DoubtSchema=new mongoose.Schema({
     solvedBy:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'Ta'
+    },
+    solvedDate:{
+        type:Date,
     },
     assignedTo:{
         type:mongoose.Schema.Types.ObjectId,

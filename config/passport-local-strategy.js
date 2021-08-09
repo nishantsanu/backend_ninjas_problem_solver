@@ -17,55 +17,68 @@ passport.use(new LocalStrategy({
 },
     function (req, email, password, done) {
         console.log("inside local");
+        let userType=req.body.userType;
+        let Db = Student;
+        if (userType === "ta") {
+            Db = Ta;
+        } else if (userType === "teacher") {
+            Db = Teacher;
+        } else if (userType === "student") {
+            Db = Student;
+        }
+        console.log("db is = ",Db);
         //find the student and establish the identity
-        Student.findOne({ email: email }, function (err, student) {
+        Db.findOne({ email: email }, function (err, student) {
+            console.log("finding");
             if (err) {
-                return done(err);
+                console.log(error);
+                return done(err,false);
             }
             if (!student || student.password != password) {
+                console.log(password);
                 return done(null, false);
             }
             console.log(student);
             return done(null, student);
         });
         //find the teacher and establish the identity
-        Teacher.findOne({ email: email }, function (err, teacher) {
-            if (err) {
-                return done(err);
-            }
-            if (!teacher || teacher.password != password) {
-                return done(null, false);
-            }
-            console.log(teacher);
-            return done(null, teacher);
-        });
-        //find the Ta and establish the identity
-        Ta.findOne({ email: email }, function (err, ta) {
-            if (err) {
-                return done(err);
-            }
-            if (!ta || ta.password != password) {
-                return done(null, false);
-            }
-             console.log(ta);
-            return done(null, ta);
-        });
+        // Teacher.findOne({ email: email }, function (err, teacher) {
+        //     if (err) {
+        //         return done(err);
+        //     }
+        //     if (!teacher || teacher.password != password) {
+        //         return done(null, false);
+        //     }
+        //     console.log(teacher);
+        //     return done(null, teacher);
+        // });
+        // //find the Ta and establish the identity
+        // Ta.findOne({ email: email }, function (err, ta) {
+        //     if (err) {
+        //         return done(err);
+        //     }
+        //     if (!ta || ta.password != password) {
+        //         return done(null, false);
+        //     }
+        //     console.log(ta);
+        //     return done(null, ta);
+        // });
 
     }
 ));
 
 //serialising the user and decide which key is to be kept in the cookies
 passport.serializeUser(function (user, done) {
-    console.log("inside serial +"+ user.id);
+    console.log("inside serial +" + user.id);
 
-     done(null, user.id);
+    done(null, user.id);
 });
 //deserialing the user  from the key in cookies
 passport.deserializeUser(function (id, done) {
     console.log("inside deserial");
 
     Db = Student;
-    console.log("id is "+id);
+    console.log("id is " + id);
     // if (userType === "ta") {
     //     Db = Ta;
     // } else if (userType === "teacher") {
@@ -79,27 +92,37 @@ passport.deserializeUser(function (id, done) {
             return done(err);
 
         }
-        return done(null, user);
+        if(user){
+            return done(null, user);
+        }
+        
     });
 
-    Db=Teacher;
+    Db = Teacher;
     Db.findById(id, function (err, user) {
         if (err) {
             console.log('error in finding user --> passport ');
             return done(err);
 
         }
-        return done(null, user);
+        if(user){
+            return done(null, user);
+        }
     });
-    Db=Ta;
+    Db = Ta;
     Db.findById(id, function (err, user) {
         if (err) {
             console.log('error in finding user --> passport ');
             return done(err);
 
         }
-        return done(null, user);
+        if(user){
+            return done(null, user);
+        }else{
+            return done(null,false);
+        }
     });
+    
 
 });
 //to check that user is authenticated or not 
@@ -113,7 +136,7 @@ passport.checkAuthentication = function (req, res, next) {
     }
     //if user is not signed in
     return res.status(401).json({
-        message:"user arleady signed in"
+        message: "user arleady signed in"
     });
 }
 passport.setAuthenticatedUser = function (req, res, next) {
