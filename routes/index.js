@@ -13,15 +13,8 @@ router.post('/doubt/add-comment',passport.authenticate('jwt',{session:false}),us
 router.get('/teacher/dashboard',passport.authenticate('jwt',{session:false}),userController.getTeacherDashboard);
 router.post('/doubt/solved-doubt',passport.authenticate('jwt',{session:false}),userController.solvedDoubt);
 router.post('/doubt/escalate-doubt',passport.authenticate('jwt',{session:false}),userController.escalateDoubt);
-// ,passport.authenticate('jwt',{session:false})
-// use passport as a middleware to authenticate
 router.post('/create-session',userController.createSession);
 router.post('/destroy-session',userController.destroySession);
-// router.get('/signup',authcontrol)
-// router.use('/users',require('./users'));
-// router.use('/posts',require('./posts'));
-// router.use('/comments',require('./comments'));
-// router.use('/likes',require('./likes'));
 
 
 module.exports=router;

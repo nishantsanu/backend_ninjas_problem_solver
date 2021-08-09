@@ -8,6 +8,9 @@ const commentSchema=new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:'Student'
     },
+    commentatorName:{
+        type:String,
+    },
     parentDoubt:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'Doubt'

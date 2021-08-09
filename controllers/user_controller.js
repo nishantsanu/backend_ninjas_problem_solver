@@ -54,81 +54,32 @@ module.exports.create = async function (req, res) {
 
 module.exports.createSession = async function (req, res) {
     try {
-        let tempUser=req.body.userType;
-        console.log(tempUser);
-
+        let tempUser = req.body.userType;
         let Db = Student;
-        if(tempUser==='ta'){
-            Db=Ta;
-        }else if(tempUser==='teacher'){
-            Db=Teacher;
+        if (tempUser === 'ta') {
+            Db = Ta;
+        } else if (tempUser === 'teacher') {
+            Db = Teacher;
         }
         let user = await Db.findOne({ email: req.body.email });
         //if user is not found
-        if(!user){
+        if (!user) {
             return res.status(400).json({
-                message:'user dont exist'
+                message: 'user dont exist'
             })
         }
         else if (user.password != req.body.password) {
-            return res.json(422, {
+            return res.status(422).json({
                 message: 'Invalid Username/Password'
             });
         }
-        // else if (user) {
-        //     //if user is found
-        //     //returning token
-        console.log(user);
-            return res.json(200, {
-                message: 'Sign In successful ,here is your token please keep it safe!',
-                data: {
-                    token: jwt.sign(user.toJSON(), 'doubtresolving', { expiresIn: '10000000' })
-                },
-                user: user,
-            });
-        // };
-        Db = Ta;
-        user = await Db.findOne({ email: req.body.email });
-        //if user is not found
-        if (user && user.password != req.body.password) {
-            return res.json(422, {
-                message: 'Invalid Username/Password'
-            });
-        }
-        else if (user) {
-            //if user is found
-            //returning token
-            return res.json(200, {
-                message: 'Sign In successful ,here is your token please keep it safe!',
-                data: {
-                    token: jwt.sign(user.toJSON(), 'doubtresolving', { expiresIn: '100000000' })
-                },
-                user: user,
-            });
-        }
-        Db = Teacher;
-        user = await Db.findOne({ email: req.body.email });
-        //if user is not found
-        if (user && user.password != req.body.password) {
-            return res.json(422, {
-                message: 'Invalid Username/Password'
-            });
-        }
-        else if (user) {
-            //if user is found
-            //returning token
-            return res.json(200, {
-                message: 'Sign In successful ,here is your token please keep it safe!',
-                data: {
-                    token: jwt.sign(user.toJSON(), 'doubtresolving', { expiresIn: '100000000' })
-                },
-                user: user,
-            });
-        }
-        return res.json(400, {
-            message: 'Cant find any user with the token',
+        return res.status(200).json({
+            message: 'Sign In successful ,here is your token please keep it safe!',
+            data: {
+                token: jwt.sign(user.toJSON(), 'doubtresolving', { expiresIn: '10000000' })
+            },
+            user: user,
         });
-
     }
     catch (err) {
         console.log('********error', err);
@@ -143,19 +94,14 @@ module.exports.createSession = async function (req, res) {
 module.exports.createDoubt = async (req, res) => {
 
     try {
-        // console.log(req);
-        console.log(req.user._id);
-        console.log(req.body);
-
         let newdoubt = await Doubt.create({
             title: req.body.title,
             description: req.body.description,
             status: "active",
             postedBy: req.user._id,
 
-        })
+        });
         let student = await Student.findById(req.user._id);
-
         student.doubts.push(newdoubt._id);
         await student.save();
 
@@ -163,7 +109,6 @@ module.exports.createDoubt = async (req, res) => {
             message: "doubt created",
             doubt: newdoubt
         });
-
 
     } catch (error) {
         console.log("error while creating user " + error);
@@ -175,13 +120,9 @@ module.exports.createDoubt = async (req, res) => {
 //accept-doubt
 module.exports.acceptDoubt = async (req, res) => {
     try {
-        console.log("inside accept doubt");
-
         let doubt = await Doubt.findById(req.body.doubtId);
         let ta = await Ta.findById(req.user._id);
-        console.log(ta.anyActiveDoubt);
         if (ta.anyActiveDoubt) {
-            console.log("theres active doubt");
             return res.status(400).json({
                 message: 'you can solve one question at a time'
             })
@@ -216,27 +157,24 @@ module.exports.escalateDoubt = async (req, res) => {
         await doubt.save();
 
         let ta = await Ta.findById(req.user._id);
-        ta.countEscalatedDoubt = ta.countEscalatedDount + 1;
+        ta.countEscalatedDoubt = +ta.countEscalatedDoubt + 1;
         ta.anyActiveDoubt = false;
 
         await ta.save();
 
         return res.status(200).json({
-            doubt: doubt
+            message: 'Doubt Escaled Successfully'
         })
     } catch (error) {
         return res.status(400).json({
-            message:'error while saving'
+            message: 'error while saving'
         })
     }
-
-
 }
 
 //solved doubt
 module.exports.solvedDoubt = async (req, res) => {
     try {
-        console.log(req.body);
         let doubt = await Doubt.findById(req.body.doubt);
         doubt.answer = req.body.answer;
         doubt.solvedBy = req.user._id;
@@ -244,18 +182,20 @@ module.exports.solvedDoubt = async (req, res) => {
         doubt.solvedDate = new Date();
         await doubt.save();
         let ta = await Ta.findById(req.user._id);
-        ta.countSolvedDoubt = ta.countSolvedDount + 1;
+        ta.countResolvedDoubt = +ta.countResolvedDoubt + 1;
         ta.solvedTime = (new Date() - new Date(doubt.createdAt)) / 60000;
         ta.anyActiveDoubt = false;
+
+
 
         await ta.save();
 
         return res.status(200).json({
-            doubt: doubt
+            message: 'Doubt Solved Successfully'
         })
     } catch (error) {
         return res.status(400).json({
-            message:'error while saving'
+            message: 'error while saving'
         })
     }
 
@@ -265,19 +205,16 @@ module.exports.solvedDoubt = async (req, res) => {
 //adding new comment
 module.exports.addNewComment = async (req, res) => {
     try {
-        // console.log(req.user._id);
-        console.log(req.body.parentDoubt);
         let parentDoubt = await Doubt.findById(req.body.parentDoubt);
+
         let newComment = await Comment.create({
             parentDoubt: req.body.parentDoubt,
             description: req.body.commentDescription,
             commentedBy: req.user._id,
-        })
-        // await ta.save();
-        console.log("before" + parentDoubt);
+            commentatorName: req.user.email,
+        });
         parentDoubt.comments.push(newComment);
         await parentDoubt.save();
-        // console.log("after" +parentDoubt.toString());
         return res.status(200).json({
             message: 'comment added succesfully',
             comment: newComment
@@ -291,8 +228,6 @@ module.exports.addNewComment = async (req, res) => {
 }
 //teachers dashboard
 module.exports.getTeacherDashboard = async (req, res) => {
-    //total doubt,total solved,total pending,total escalated
-    //ta record
     try {
         const allDoubt = await Doubt.find({});
         var totalDoubt = 0, totalTime = 0.0, averageTime = 0.0, totalResolved = 0, totalEscalated = 0;
@@ -300,9 +235,9 @@ module.exports.getTeacherDashboard = async (req, res) => {
             if (doubt.status === 'solved') {
                 totalResolved++;
                 const endTime = new Date(doubt.solvedDate);
-                
+
                 const startTime = new Date(doubt.createdAt);
-                
+
                 totalTime += Math.round((endTime - startTime) / 60000);
                 console.log(totalTime);
             } else if (doubt.status === 'escalated') {
@@ -314,8 +249,8 @@ module.exports.getTeacherDashboard = async (req, res) => {
 
         averageTime = totalTime / totalResolved;
 
-        const taList = await Ta.find({});
-
+        const taList = await Ta.find({}).select('-password');
+        console.log(taList);
         return res.status(200).json({
             totalDoubt: totalDoubt,
             totalResolved: totalResolved,
@@ -329,7 +264,6 @@ module.exports.getTeacherDashboard = async (req, res) => {
             message: "error in fetching dashboard data"
         })
     }
-
 }
 
 //sign-out
