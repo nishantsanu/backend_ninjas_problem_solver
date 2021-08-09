@@ -19,7 +19,7 @@ passport.use(new JWTStrategy(opts, async function (jwtPayLoad, done) {
     // let Db = Student;
     try {
         let student = await Student.findById(jwtPayLoad._id);
-        if (user) {
+        if (student) {
             return done(null, student);
         }
         let ta = await Ta.findById(jwtPayLoad._id);
